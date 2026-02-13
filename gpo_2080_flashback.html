@@ -34,74 +34,71 @@
         };
 
         const raindrops = [];
-        for(let i = 0; i < 150; i++) {
+        for(let i = 0; i < 200; i++) {
             raindrops.push({
                 x: Math.random() * canvas.width,
                 y: Math.random() * canvas.height,
                 length: Math.random() * 20 + 10,
-                speed: Math.random() * 10 + 10
+                speed: Math.random() * 10 + 10,
+                opacity: Math.random() * 0.5 + 0.1, // Camadas de profundidade
+                depth: Math.random() // 0 = fundo, 1 = frente
             });
         }
 
-        function drawPlayer() {
-            // Corpo (Jaqueta)
-            ctx.fillStyle = player.color;
-            ctx.shadowBlur = 15;
-            ctx.shadowColor = player.color;
-            ctx.fillRect(player.x, player.y, player.width, player.height - 20);
-            
-            // Pernas (Lycra Preta)
-            ctx.shadowBlur = 0;
-            ctx.fillStyle = '#111';
-            ctx.fillRect(player.x + 5, player.y + 40, 10, 20);
-            ctx.fillRect(player.x + player.width - 15, player.y + 40, 10, 20);
-
-            // Cabeça
-            ctx.fillStyle = '#d2b48c';
-            ctx.fillRect(player.x + 5, player.y - 15, 20, 20);
-        }
-
-        function drawRain() {
-            ctx.strokeStyle = 'rgba(174, 194, 224, 0.5)';
-            ctx.lineWidth = 1;
+        function drawRain(depthLayer) {
             raindrops.forEach(drop => {
-                ctx.beginPath();
-                ctx.moveTo(drop.x, drop.y);
-                ctx.lineTo(drop.x + 2, drop.y + drop.length);
-                ctx.stroke();
+                // Desenha apenas as gotas da camada solicitada
+                if ((depthLayer === 'back' && drop.depth < 0.5) || 
+                    (depthLayer === 'front' && drop.depth >= 0.5)) {
+                    
+                    ctx.strokeStyle = `rgba(174, 194, 224, ${drop.opacity})`;
+                    ctx.lineWidth = drop.depth * 1.5; // Gotas na frente são mais grossas
+                    ctx.beginPath();
+                    ctx.moveTo(drop.x, drop.y);
+                    ctx.lineTo(drop.x + 2, drop.y + drop.length);
+                    ctx.stroke();
+                }
                 
-                drop.y += drop.speed;
-                drop.x += 1; // Vento leve
-                if (drop.y > canvas.height) {
-                    drop.y = -20;
-                    drop.x = Math.random() * canvas.width;
+                // Update apenas uma vez por frame
+                if (depthLayer === 'front') {
+                    drop.y += drop.speed * (drop.depth + 0.5); // Gotas na frente caem mais rápido
+                    drop.x += 1;
+                    if (drop.y > canvas.height) {
+                        drop.y = -20;
+                        drop.x = Math.random() * canvas.width;
+                    }
                 }
             });
         }
 
         function drawBackground() {
-            // Chão molhado com reflexos
+            // Céu profundo
+            ctx.fillStyle = '#020508';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Prédios ao fundo (Silhuetas)
+            ctx.fillStyle = '#050a0f';
+            ctx.fillRect(200, canvas.height - 400, 100, 340);
+            ctx.fillRect(500, canvas.height - 550, 180, 490);
+            ctx.fillRect(800, canvas.height - 450, 120, 390);
+
+            // Janelas distantes (luzes)
+            ctx.fillStyle = 'rgba(0, 255, 204, 0.2)';
+            ctx.fillRect(220, canvas.height - 380, 10, 10);
+            ctx.fillRect(550, canvas.height - 520, 10, 10);
+            
+            drawRain('back'); // Chuva atrás dos prédios/objetos
+
+            // Chão molhado
             ctx.fillStyle = '#050505';
             ctx.fillRect(0, canvas.height - 60, canvas.width, 60);
-            
-            // Reflexo Neon
-            let gradient = ctx.createLinearGradient(0, canvas.height - 60, 0, canvas.height);
-            gradient.addColorStop(0, 'rgba(0, 255, 204, 0.1)');
-            gradient.addColorStop(1, 'transparent');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, canvas.height - 60, canvas.width, 60);
-
-            // Prédios ao fundo
-            ctx.fillStyle = '#0a0a0a';
-            ctx.fillRect(200, canvas.height - 400, 100, 340);
-            ctx.fillRect(500, canvas.height - 500, 150, 440);
         }
 
         function update() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             drawBackground();
-            drawRain();
             drawPlayer();
+            drawRain('front'); // Chuva na frente do personagem
             requestAnimationFrame(update);
         }
 
