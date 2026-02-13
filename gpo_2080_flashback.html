@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aura01 - GPO 2080 Evolution</title>
+    <title>GPO 2080 - Aura01 Edition</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
@@ -18,7 +18,8 @@
             position: relative; 
             width: 100vw; 
             height: 100vh; 
-            background: linear-gradient(to bottom, #020508 0%, #0a1a1f 100%);
+            background: #020508;
+            overflow: hidden;
         }
 
         canvas { display: block; width: 100%; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
@@ -28,79 +29,70 @@
             position: absolute; top: 20px; left: 20px; 
             color: #0ff; text-shadow: 0 0 10px #0ff; 
             z-index: 50; pointer-events: none; 
-            background: rgba(0,0,0,0.7); padding: 12px 20px; 
+            background: rgba(0,0,0,0.8); padding: 12px 20px; 
             border-radius: 5px; border-left: 4px solid #ffcc00;
+            border-bottom: 1px solid rgba(0, 255, 204, 0.2);
         }
 
-        /* Personagem Evoluído (Jaqueta Amarela + Pixel Art) */
+        /* Personagem Pixelado Melhorado */
         #character { 
             position: absolute; bottom: 80px; left: 100px; 
             width: 40px; height: 75px; z-index: 20; 
-            transition: left 0.05s linear;
+            transform-origin: center bottom;
         }
 
-        /* Jaqueta Amarela Luminescente */
         .head { 
-            width: 24px; height: 24px; background: #ffdbac; 
-            position: absolute; top: -5px; left: 8px; 
-            border: 2px solid #000;
+            width: 24px; height: 24px; background: #ffcc00; 
+            position: absolute; top: 0; left: 8px; 
+            border: 2px solid #000; box-shadow: inset -4px -4px 0 rgba(0,0,0,0.2);
         }
         .visor { 
             width: 100%; height: 6px; background: #0ff; 
-            position: absolute; top: 6px; left: 0; 
-            box-shadow: 0 0 5px #0ff;
+            position: absolute; top: 6px; left: 0; box-shadow: 0 0 8px #0ff;
         }
 
-        .jacket { 
-            width: 32px; height: 35px; background: #ffcc00; 
-            position: absolute; top: 19px; left: 4px; 
-            border: 2px solid #000; border-radius: 4px;
-            box-shadow: 0 0 15px rgba(255, 204, 0, 0.4);
-        }
-
-        .arm { 
-            width: 10px; height: 25px; background: #ffcc00; 
-            position: absolute; top: 20px; left: -4px; 
-            border: 2px solid #000; transform-origin: top center;
+        .torso { 
+            width: 30px; height: 35px; background: #ffcc00; 
+            position: absolute; top: 24px; left: 5px; 
+            border: 2px solid #000; border-radius: 2px;
+            box-shadow: 0 0 20px rgba(255, 204, 0, 0.3);
         }
 
         .leg { 
-            width: 12px; height: 22px; background: #111; 
-            position: absolute; bottom: -18px; 
-            border: 2px solid #000;
+            width: 12px; height: 24px; background: #111; 
+            position: absolute; bottom: -18px; border: 2px solid #000;
         }
-        .leg-left { left: 4px; }
-        .leg-right { left: 16px; }
+        .leg-left { left: 5px; }
+        .leg-right { left: 18px; }
 
-        /* Animação de Caminhada */
-        .walking .leg-left { animation: walk 0.3s infinite alternate; }
-        .walking .leg-right { animation: walk 0.3s infinite alternate-reverse; }
-        .walking .arm { animation: swing 0.3s infinite alternate; }
+        /* Animações */
+        .walking .leg-left { animation: walkCycle 0.4s infinite alternate; }
+        .walking .leg-right { animation: walkCycle 0.4s infinite alternate-reverse; }
+        .walking { animation: bob 0.2s infinite alternate; }
 
-        @keyframes walk { from { transform: rotate(-20deg); } to { transform: rotate(20deg); } }
-        @keyframes swing { from { transform: rotate(15deg); } to { transform: rotate(-15deg); } }
-
-        /* Prédios Neon ao Fundo */
-        .building {
-            position: absolute; bottom: 80px; background: #050a0f;
-            border-top: 1px solid #1a2a2a; z-index: 2;
+        @keyframes walkCycle { 
+            from { transform: rotate(-25deg); } 
+            to { transform: rotate(25deg); } 
         }
-        .neon-sign {
-            position: absolute; top: 20px; left: 10px;
-            width: 30px; height: 100px;
-            border: 1px solid #0ff; box-shadow: 0 0 10px #0ff;
-            opacity: 0.3;
+        @keyframes bob { 
+            from { transform: translateY(0); } 
+            to { transform: translateY(-2px); } 
         }
 
+        /* Chão e Reflexo */
         #floor { 
             position: absolute; bottom: 0; width: 100%; height: 80px; 
-            background: #000; border-top: 2px solid #1a1a1a; z-index: 10;
-            box-shadow: 0 -10px 30px rgba(0,255,204,0.05);
+            background: #000; border-top: 2px solid #1a2a2a; z-index: 10;
+        }
+        .glow {
+            position: absolute; bottom: 80px; width: 100px; height: 20px;
+            background: radial-gradient(ellipse at center, rgba(255, 204, 0, 0.2) 0%, transparent 70%);
+            z-index: 5; pointer-events: none; transform: translateX(-30px);
         }
 
         #instructions { 
             position: absolute; bottom: 20px; right: 20px; 
-            color: #ffcc00; z-index: 100; font-size: 12px; 
+            color: #ffcc00; z-index: 100; font-size: 12px; opacity: 0.6;
         }
     </style>
 </head>
@@ -108,91 +100,122 @@
     <div id="game-container">
         <div id="ui">
             <div>AURA01 CORE | GPO 2080</div>
-            <div style="font-size: 10px; color: #ffcc00;">PROTOCOLO FLASHBACK ATIVO</div>
+            <div style="font-size: 10px; color: #ffcc00; margin-top: 5px;">STORY: O DESPERTAR NO SETOR 4</div>
         </div>
 
-        <canvas id="chuvaCanvas"></canvas>
-
-        <!-- Cenário -->
-        <div class="building" style="left: 15%; width: 120px; height: 300px;"><div class="neon-sign"></div></div>
-        <div class="building" style="left: 60%; width: 180px; height: 450px;"><div class="neon-sign" style="border-color: #f0f; box-shadow: 0 0 10px #f0f;"></div></div>
+        <canvas id="gameCanvas"></canvas>
 
         <div id="character">
+            <div class="glow"></div>
             <div class="head"><div class="visor"></div></div>
-            <div class="jacket"></div>
-            <div class="arm"></div>
+            <div class="torso"></div>
             <div class="leg leg-left"></div>
             <div class="leg leg-right"></div>
         </div>
 
         <div id="floor"></div>
-        <div id="instructions">USE ← → PARA EXPLORAR O SETOR 4</div>
+        <div id="instructions">SETAS ← → PARA CAMINHAR</div>
     </div>
 
     <script>
-        const canvas = document.getElementById('chuvaCanvas');
+        const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
         window.addEventListener('resize', resize);
         resize();
 
-        // Chuva Evoluída (Sua Lógica + Efeito Aura01)
+        // Engine de Chuva e Cenário
         const gotas = [];
-        for(let i=0; i<400; i++) {
+        for(let i=0; i<450; i++) {
             gotas.push({
                 x: Math.random() * canvas.width,
                 y: Math.random() * canvas.height,
-                l: 20 + Math.random() * 20,
-                v: 10 + Math.random() * 10,
-                o: 0.2 + Math.random() * 0.4
+                l: 15 + Math.random() * 20,
+                v: 12 + Math.random() * 8,
+                o: 0.1 + Math.random() * 0.3,
+                s: 0.5 + Math.random() * 1
             });
         }
 
-        function animar() {
-            ctx.fillStyle = 'rgba(2, 5, 8, 0.2)';
+        const buildings = [];
+        for(let i=0; i<10; i++) {
+            buildings.push({
+                x: i * 300 + Math.random() * 100,
+                w: 100 + Math.random() * 150,
+                h: 200 + Math.random() * 400,
+                c: Math.random() > 0.5 ? '#050a0f' : '#03070a'
+            });
+        }
+
+        function draw(time) {
+            // Motion Blur
+            ctx.fillStyle = 'rgba(2, 5, 8, 0.25)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Prédios Parallax
+            buildings.forEach(b => {
+                ctx.fillStyle = b.c;
+                // O movimento dos prédios é baseado na posição do jogador (simulado aqui)
+                let parallaxX = b.x - (posX * 0.2); 
+                ctx.fillRect(parallaxX, canvas.height - b.h - 80, b.w, b.h);
+                
+                // Janelas aleatórias
+                ctx.fillStyle = 'rgba(0, 255, 204, 0.05)';
+                if(Math.sin(time/1000 + b.x) > 0.8) ctx.fillStyle = 'rgba(0, 255, 204, 0.2)';
+                ctx.fillRect(parallaxX + 10, canvas.height - b.h - 60, 5, 5);
+            });
+
+            // Chuva
             gotas.forEach(g => {
                 ctx.beginPath();
                 ctx.moveTo(g.x, g.y);
                 ctx.lineTo(g.x + 1, g.y + g.l);
                 ctx.strokeStyle = `rgba(174, 194, 224, ${g.o})`;
-                ctx.lineWidth = 1;
+                ctx.lineWidth = g.s;
                 ctx.stroke();
                 g.y += g.v;
                 if(g.y > canvas.height) { g.y = -g.l; g.x = Math.random() * canvas.width; }
             });
-            requestAnimationFrame(animar);
-        }
-        animar();
 
-        // Movimento
+            requestAnimationFrame(draw);
+        }
+
+        // Controle do Personagem
         const char = document.getElementById('character');
         let posX = 100;
-        let isWalking = false;
-        let stopTimeout;
+        let velX = 0;
+        const speed = 0.8;
+        const friction = 0.9;
+        const maxSpeed = 12;
+
+        function updatePhysics() {
+            posX += velX;
+            velX *= friction;
+            
+            if (Math.abs(velX) > 0.5) {
+                char.classList.add('walking');
+                char.style.transform = `scaleX(${velX > 0 ? 1 : -1})`;
+            } else {
+                char.classList.remove('walking');
+            }
+
+            // Limites da tela
+            if(posX < 0) posX = 0;
+            if(posX > window.innerWidth - 40) posX = window.innerWidth - 40;
+
+            char.style.left = posX + 'px';
+            requestAnimationFrame(updatePhysics);
+        }
 
         window.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-                isWalking = true;
-                char.classList.add('walking');
-                clearTimeout(stopTimeout);
-                
-                if (e.key === 'ArrowRight') {
-                    posX += 12;
-                    char.style.transform = 'scaleX(1)';
-                } else {
-                    posX -= 12;
-                    char.style.transform = 'scaleX(-1)';
-                }
-                char.style.left = posX + 'px';
-            }
+            if (e.key === 'ArrowRight') velX += speed;
+            if (e.key === 'ArrowLeft') velX -= speed;
+            if (velX > maxSpeed) velX = maxSpeed;
+            if (velX < -maxSpeed) velX = -maxSpeed;
         });
 
-        window.addEventListener('keyup', () => {
-            stopTimeout = setTimeout(() => {
-                char.classList.remove('walking');
-            }, 100);
-        });
+        updatePhysics();
+        draw(0);
     </script>
 </body>
 </html>
