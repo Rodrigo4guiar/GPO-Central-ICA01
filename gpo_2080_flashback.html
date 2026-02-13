@@ -3,96 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GPO 2080: Flashback - Avenue Evolution</title>
+    <title>GPO 2080: Flashback - Cinematic Physics</title>
     <style>
         :root {
             --orange: #ff6600;
             --neon-blue: #00f2ff;
-            --neon-pink: #f0f;
             --bg-dark: #010409;
         }
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body { 
-            background: #000; 
-            overflow: hidden; 
-            font-family: 'Courier New', monospace;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        #game-monitor {
-            position: relative;
-            width: 1024px;
-            height: 576px;
-            background: var(--bg-dark);
-            border: 15px solid #1a1a1a;
-            border-radius: 20px;
-            box-shadow: 0 0 50px rgba(0, 242, 255, 0.1);
-            overflow: hidden;
-        }
-
+        body { background: #000; overflow: hidden; font-family: 'Courier New', monospace; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        #game-monitor { position: relative; width: 1024px; height: 576px; background: var(--bg-dark); border: 15px solid #1a1a1a; border-radius: 20px; box-shadow: 0 0 50px rgba(0, 242, 255, 0.1); overflow: hidden; }
         canvas { display: block; image-rendering: pixelated; position: absolute; top: 0; left: 0; }
-
-        #ui {
-            position: absolute; top: 30px; left: 30px;
-            color: var(--neon-blue);
-            text-shadow: 0 0 10px var(--neon-blue);
-            z-index: 100;
-            pointer-events: none;
-            opacity: 0.8;
-            font-size: 12px;
-        }
-
-        /* Agente Laranja */
-        #agent {
-            position: absolute;
-            width: 32px;
-            height: 64px;
-            z-index: 50;
-            transition: left 0.1s linear, bottom 0.1s linear;
-        }
-
+        #ui { position: absolute; top: 30px; left: 30px; color: var(--neon-blue); text-shadow: 0 0 10px var(--neon-blue); z-index: 100; font-size: 12px; }
+        #agent { position: absolute; width: 32px; height: 64px; z-index: 50; }
         .head { width: 18px; height: 18px; background: #ffdbac; border: 2px solid #000; position: absolute; top: 0; left: 7px; }
         .visor { width: 100%; height: 4px; background: var(--neon-blue); position: absolute; top: 5px; box-shadow: 0 0 5px var(--neon-blue); }
-        .jacket { width: 28px; height: 32px; background: var(--orange); border: 2px solid #000; border-radius: 4px; position: absolute; top: 18px; left: 2px; box-shadow: 0 0 15px rgba(255, 102, 0, 0.4); }
+        .jacket { width: 28px; height: 32px; background: var(--orange); border: 2px solid #000; border-radius: 4px; position: absolute; top: 18px; left: 2px; box-shadow: 0 0 20px rgba(255, 102, 0, 0.6); }
         .pants { width: 24px; height: 14px; background: #111; border: 2px solid #000; position: absolute; top: 50px; left: 4px; }
-        
-        .platform {
-            position: absolute;
-            background: linear-gradient(to bottom, #0a1a2a, #050505);
-            border-top: 2px solid #1a2a3a;
-            z-index: 10;
-        }
-
-        .scanlines {
-            width: 100%; height: 100%; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-            background-size: 100% 3px, 3px 100%; z-index: 200; pointer-events: none; position: absolute;
-        }
+        .glow-trail { position: absolute; width: 100%; height: 100%; background: var(--orange); opacity: 0.3; filter: blur(8px); border-radius: 50%; z-index: -1; }
+        .platform { position: absolute; background: linear-gradient(to bottom, #0a1a2a, #050505); border-top: 2px solid #1a2a3a; z-index: 10; }
+        .scanlines { width: 100%; height: 100%; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%); background-size: 100% 3px; z-index: 200; pointer-events: none; position: absolute; }
     </style>
 </head>
 <body>
     <div id="game-monitor">
         <div class="scanlines"></div>
-        <div id="ui">AURA01_OS v2.1 | GRANDE_AVENIDA_2080</div>
-
+        <div id="ui">AURA01_OS v2.2 | PHYSICS_UPDATE | SETOR_4</div>
         <canvas id="skyCanvas"></canvas>
         <canvas id="cityCanvas"></canvas>
         <canvas id="rainCanvas"></canvas>
-
         <div id="agent">
+            <div class="glow-trail"></div>
             <div class="head"><div class="visor"></div></div>
             <div class="jacket"></div>
             <div class="pants"></div>
         </div>
-
         <div class="platform" style="bottom: 0; width: 100%; height: 40px;"></div>
         <div class="platform" style="bottom: 180px; left: 50px; width: 400px; height: 20px;"></div>
+        <div class="platform" style="bottom: 300px; right: 100px; width: 300px; height: 20px;"></div>
     </div>
-
     <script>
         const skyCanvas = document.getElementById('skyCanvas');
         const cityCanvas = document.getElementById('cityCanvas');
@@ -100,82 +49,65 @@
         const sCtx = skyCanvas.getContext('2d');
         const cCtx = cityCanvas.getContext('2d');
         const rCtx = rainCanvas.getContext('2d');
+        skyCanvas.width = cityCanvas.width = rainCanvas.width = 1024;
+        skyCanvas.height = cityCanvas.height = rainCanvas.height = 576;
 
-        function setup() {
-            [skyCanvas, cityCanvas, rainCanvas].forEach(c => {
-                c.width = 1024; c.height = 576;
-            });
-        }
-        setup();
-
-        // Carros voadores (Luzes cruzando o céu)
         const flyers = [];
-        for(let i=0; i<8; i++) flyers.push({ x: Math.random()*1024, y: 50 + Math.random()*150, s: 2 + Math.random()*5, c: Math.random() > 0.5 ? '#0ff' : '#f0f' });
-
-        // Chuva
+        for(let i=0; i<10; i++) flyers.push({ x: Math.random()*1024, y: 50 + Math.random()*150, s: 1.5 + Math.random()*4, c: Math.random() > 0.5 ? '#0ff' : '#f0f' });
         const drops = [];
-        for(let i=0; i<300; i++) drops.push({ x: Math.random()*1024, y: Math.random()*576, l: 20, v: 10 + Math.random()*10 });
+        for(let i=0; i<350; i++) drops.push({ x: Math.random()*1024, y: Math.random()*576, l: 25, v: 12 + Math.random()*10 });
 
-        // Física
         const agent = document.getElementById('agent');
         let px = 100, py = 40, vx = 0, vy = 0;
-        const gravity = 0.8, jump = 18;
+        const gravity = 0.6, jumpPower = 16, friction = 0.88;
         let jumping = false;
 
+        const platforms = [
+            { b: 40, l: 0, w: 1024 },
+            { b: 180, l: 50, w: 400 },
+            { b: 300, l: 624, w: 300 }
+        ];
+
         function loop() {
-            // Desenhar Céu e Carros
-            sCtx.fillStyle = '#010409';
-            sCtx.fillRect(0,0,1024,576);
+            sCtx.fillStyle = '#010409'; sCtx.fillRect(0,0,1024,576);
             flyers.forEach(f => {
-                sCtx.shadowBlur = 10; sCtx.shadowColor = f.c;
-                sCtx.fillStyle = f.c;
-                sCtx.fillRect(f.x, f.y, 15, 2);
-                f.x += f.s;
-                if(f.x > 1024) f.x = -20;
+                sCtx.fillStyle = f.c; sCtx.shadowBlur = 15; sCtx.shadowColor = f.c;
+                sCtx.fillRect(f.x, f.y, 20, 2);
+                f.x += f.s; if(f.x > 1024) f.x = -20;
             });
 
-            // Desenhar Prédios Distantes (Parallax)
-            cCtx.clearRect(0,0,1024,576);
-            cCtx.shadowBlur = 0;
-            for(let i=0; i<6; i++) {
-                let bx = (i * 200) - (px * 0.1);
-                cCtx.fillStyle = '#050a0f';
-                cCtx.fillRect(bx, 150, 150, 400);
-                cCtx.fillStyle = 'rgba(0, 242, 255, 0.1)';
-                cCtx.fillRect(bx + 20, 200, 10, 10);
+            cCtx.clearRect(0,0,1024,576); cCtx.shadowBlur = 0;
+            for(let i=0; i<8; i++) {
+                let bx = (i * 250) - (px * 0.15);
+                cCtx.fillStyle = '#050a0f'; cCtx.fillRect(bx, 200, 180, 400);
             }
 
-            // Chuva
-            rCtx.clearRect(0,0,1024,576);
-            rCtx.strokeStyle = 'rgba(174, 194, 224, 0.2)';
+            rCtx.clearRect(0,0,1024,576); rCtx.strokeStyle = 'rgba(174, 194, 224, 0.25)';
             drops.forEach(d => {
                 rCtx.beginPath(); rCtx.moveTo(d.x, d.y); rCtx.lineTo(d.x+1, d.y+d.l); rCtx.stroke();
                 d.y += d.v; if(d.y > 576) { d.y = -20; d.x = Math.random()*1024; }
             });
 
-            // Movimento do Agente
-            vy -= gravity;
-            px += vx; py += vy;
-            vx *= 0.85;
+            vy -= gravity; px += vx; py += vy; vx *= friction;
+            jumping = true;
+            platforms.forEach(p => {
+                if (px + 20 > p.l && px < p.l + p.w && py >= p.b && py + vy <= p.b) {
+                    py = p.b; vy = 0; jumping = false;
+                }
+            });
 
-            // Chão
-            if(py < 40) { py = 40; vy = 0; jumping = false; }
-            // Plataforma
-            if(px > 30 && px < 450 && py >= 180 && py + vy <= 180) { py = 180; vy = 0; jumping = false; }
-
-            agent.style.left = px + 'px';
-            agent.style.bottom = py + 'px';
+            if(px < 0) px = 0; if(px > 1024 - 32) px = 1024 - 32;
+            agent.style.left = px + 'px'; agent.style.bottom = py + 'px';
+            if(Math.abs(vx) > 0.5) agent.style.transform = `scaleX(${vx > 0 ? 1 : -1})`;
 
             requestAnimationFrame(loop);
         }
 
         window.addEventListener('keydown', e => {
-            if(e.key === 'ArrowRight') vx = 6;
-            if(e.key === 'ArrowLeft') vx = -6;
-            if(e.key === ' ' && !jumping) { vy = jump; jumping = true; }
-            if(Math.abs(vx) > 0.5) agent.style.transform = `scaleX(${vx > 0 ? 1 : -1})`;
+            if(e.key === 'ArrowRight') vx = 7;
+            if(e.key === 'ArrowLeft') vx = -7;
+            if(e.key === ' ' && !jumping) { vy = jumpPower; jumping = true; }
         });
-
         loop();
     </script>
 </body>
