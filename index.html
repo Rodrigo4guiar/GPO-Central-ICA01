@@ -250,7 +250,23 @@
         document.querySelector('input').onkeypress = (e) => { if(e.key === 'Enter') sendMessage(); };
 
         // Escutar mensagens e testar conexão inicial
-        setConnected(true); // Assume ativo se carregar a lib
+        setConnected(true); 
+
+        // Carregar Histórico Inicial
+        async function loadHistory() {
+            const { data, error } = await supabaseClient
+                .from('messages')
+                .select('*')
+                .order('created_at', { ascending: true })
+                .limit(50);
+            
+            if (data) {
+                const container = document.querySelector('.chat-container');
+                // Manter apenas a mensagem de boas vindas inicial se quiser, ou limpar tudo
+                data.forEach(msg => appendMessage(msg.sender, msg.text));
+            }
+        }
+        loadHistory();
         
         supabaseClient
             .channel('public:messages')
