@@ -3,95 +3,195 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GPO 2080 - Engine de Chuva</title>
+    <title>Aura01 - GPO 2080 Evolution</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #020508; min-height: 100vh; overflow: hidden; font-family: 'Courier New', monospace; }
-        #game-container { position: relative; width: 100vw; height: 100vh; }
-        canvas { display: block; width: 100%; height: 100vh; position: absolute; top: 0; left: 0; }
-        #ui { position: absolute; top: 20px; left: 20px; color: #0ff; text-shadow: 0 0 10px #0ff; z-index: 100; pointer-events: none; }
-        #agent { position: absolute; bottom: 80px; left: 100px; width: 40px; height: 80px; z-index: 10; transition: transform 0.1s; }
-        .jacket { width: 100%; height: 50px; background: #ffcc00; box-shadow: 0 0 20px #ffcc00; border-radius: 5px; }
-        .legs { width: 100%; height: 30px; display: flex; justify-content: space-around; }
-        .leg { width: 12px; height: 100%; background: #111; }
-        #floor { position: absolute; bottom: 0; width: 100%; height: 80px; background: #000; border-top: 2px solid #050505; z-index: 5; }
+        body { 
+            background: #020508; 
+            min-height: 100vh; 
+            overflow: hidden; 
+            font-family: 'Courier New', monospace;
+            image-rendering: pixelated;
+        }
+
+        #game-container { 
+            position: relative; 
+            width: 100vw; 
+            height: 100vh; 
+            background: linear-gradient(to bottom, #020508 0%, #0a1a1f 100%);
+        }
+
+        canvas { display: block; width: 100%; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
+
+        /* Interface Estilo Aura01 */
+        #ui { 
+            position: absolute; top: 20px; left: 20px; 
+            color: #0ff; text-shadow: 0 0 10px #0ff; 
+            z-index: 50; pointer-events: none; 
+            background: rgba(0,0,0,0.7); padding: 12px 20px; 
+            border-radius: 5px; border-left: 4px solid #ffcc00;
+        }
+
+        /* Personagem Evoluído (Jaqueta Amarela + Pixel Art) */
+        #character { 
+            position: absolute; bottom: 80px; left: 100px; 
+            width: 40px; height: 75px; z-index: 20; 
+            transition: left 0.05s linear;
+        }
+
+        /* Jaqueta Amarela Luminescente */
+        .head { 
+            width: 24px; height: 24px; background: #ffdbac; 
+            position: absolute; top: -5px; left: 8px; 
+            border: 2px solid #000;
+        }
+        .visor { 
+            width: 100%; height: 6px; background: #0ff; 
+            position: absolute; top: 6px; left: 0; 
+            box-shadow: 0 0 5px #0ff;
+        }
+
+        .jacket { 
+            width: 32px; height: 35px; background: #ffcc00; 
+            position: absolute; top: 19px; left: 4px; 
+            border: 2px solid #000; border-radius: 4px;
+            box-shadow: 0 0 15px rgba(255, 204, 0, 0.4);
+        }
+
+        .arm { 
+            width: 10px; height: 25px; background: #ffcc00; 
+            position: absolute; top: 20px; left: -4px; 
+            border: 2px solid #000; transform-origin: top center;
+        }
+
+        .leg { 
+            width: 12px; height: 22px; background: #111; 
+            position: absolute; bottom: -18px; 
+            border: 2px solid #000;
+        }
+        .leg-left { left: 4px; }
+        .leg-right { left: 16px; }
+
+        /* Animação de Caminhada */
+        .walking .leg-left { animation: walk 0.3s infinite alternate; }
+        .walking .leg-right { animation: walk 0.3s infinite alternate-reverse; }
+        .walking .arm { animation: swing 0.3s infinite alternate; }
+
+        @keyframes walk { from { transform: rotate(-20deg); } to { transform: rotate(20deg); } }
+        @keyframes swing { from { transform: rotate(15deg); } to { transform: rotate(-15deg); } }
+
+        /* Prédios Neon ao Fundo */
+        .building {
+            position: absolute; bottom: 80px; background: #050a0f;
+            border-top: 1px solid #1a2a2a; z-index: 2;
+        }
+        .neon-sign {
+            position: absolute; top: 20px; left: 10px;
+            width: 30px; height: 100px;
+            border: 1px solid #0ff; box-shadow: 0 0 10px #0ff;
+            opacity: 0.3;
+        }
+
+        #floor { 
+            position: absolute; bottom: 0; width: 100%; height: 80px; 
+            background: #000; border-top: 2px solid #1a1a1a; z-index: 10;
+            box-shadow: 0 -10px 30px rgba(0,255,204,0.05);
+        }
+
+        #instructions { 
+            position: absolute; bottom: 20px; right: 20px; 
+            color: #ffcc00; z-index: 100; font-size: 12px; 
+        }
     </style>
 </head>
 <body>
     <div id="game-container">
         <div id="ui">
-            <div>AURA01 - ENGINE DE CHUVA AVANÇADA</div>
-            <div>STATUS: AMBIENTE 2080 CARREGADO</div>
+            <div>AURA01 CORE | GPO 2080</div>
+            <div style="font-size: 10px; color: #ffcc00;">PROTOCOLO FLASHBACK ATIVO</div>
         </div>
+
         <canvas id="chuvaCanvas"></canvas>
-        <div id="agent">
+
+        <!-- Cenário -->
+        <div class="building" style="left: 15%; width: 120px; height: 300px;"><div class="neon-sign"></div></div>
+        <div class="building" style="left: 60%; width: 180px; height: 450px;"><div class="neon-sign" style="border-color: #f0f; box-shadow: 0 0 10px #f0f;"></div></div>
+
+        <div id="character">
+            <div class="head"><div class="visor"></div></div>
             <div class="jacket"></div>
-            <div class="legs"><div class="leg"></div><div class="leg"></div></div>
+            <div class="arm"></div>
+            <div class="leg leg-left"></div>
+            <div class="leg leg-right"></div>
         </div>
+
         <div id="floor"></div>
+        <div id="instructions">USE ← → PARA EXPLORAR O SETOR 4</div>
     </div>
+
     <script>
         const canvas = document.getElementById('chuvaCanvas');
         const ctx = canvas.getContext('2d');
-        function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
+        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resize);
+        resize();
 
-        const QTD_GOTAS = 400; 
-        const VELOCIDADE_BASE = 8; 
-        const COMPRIMENTO_BASE = 25; 
-        let gotas = [];
-
-        function iniciarGotas() {
-            for (let i = 0; i < QTD_GOTAS; i++) {
-                gotas.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height,
-                    comprimento: COMPRIMENTO_BASE + Math.random() * 20,
-                    velocidade: VELOCIDADE_BASE + Math.random() * 7,
-                    espessura: 0.5 + Math.random() * 1.5,
-                    opacidade: 0.2 + Math.random() * 0.4
-                });
-            }
-        }
-        iniciarGotas();
-
-        function desenharGota(gota) {
-            ctx.beginPath();
-            ctx.moveTo(gota.x, gota.y);
-            ctx.lineTo(gota.x + 1, gota.y + gota.comprimento);
-            ctx.strokeStyle = `rgba(174, 194, 224, ${gota.opacidade})`;
-            ctx.lineWidth = gota.espessura;
-            ctx.lineCap = 'round';
-            ctx.stroke();
+        // Chuva Evoluída (Sua Lógica + Efeito Aura01)
+        const gotas = [];
+        for(let i=0; i<400; i++) {
+            gotas.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                l: 20 + Math.random() * 20,
+                v: 10 + Math.random() * 10,
+                o: 0.2 + Math.random() * 0.4
+            });
         }
 
-        function atualizarGota(gota) {
-            gota.y += gota.velocidade;
-            gota.x += 0.5;
-            if (gota.y > canvas.height) {
-                gota.y = -gota.comprimento;
-                gota.x = Math.random() * canvas.width;
-            }
-        }
-
-        function animarChuva() {
-            ctx.fillStyle = 'rgba(2, 5, 8, 0.2)'; 
+        function animar() {
+            ctx.fillStyle = 'rgba(2, 5, 8, 0.2)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            for (let gota of gotas) {
-                desenharGota(gota);
-                atualizarGota(gota);
-            }
-            requestAnimationFrame(animarChuva);
+            gotas.forEach(g => {
+                ctx.beginPath();
+                ctx.moveTo(g.x, g.y);
+                ctx.lineTo(g.x + 1, g.y + g.l);
+                ctx.strokeStyle = `rgba(174, 194, 224, ${g.o})`;
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                g.y += g.v;
+                if(g.y > canvas.height) { g.y = -g.l; g.x = Math.random() * canvas.width; }
+            });
+            requestAnimationFrame(animar);
         }
-        animarChuva();
+        animar();
 
-        let pos = 100;
+        // Movimento
+        const char = document.getElementById('character');
+        let posX = 100;
+        let isWalking = false;
+        let stopTimeout;
+
         window.addEventListener('keydown', (e) => {
-            const agent = document.getElementById('agent');
-            if(e.key === 'ArrowRight') { pos += 15; agent.style.transform = 'scaleX(1)'; }
-            if(e.key === 'ArrowLeft') { pos -= 15; agent.style.transform = 'scaleX(-1)'; }
-            agent.style.left = pos + 'px';
+            if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+                isWalking = true;
+                char.classList.add('walking');
+                clearTimeout(stopTimeout);
+                
+                if (e.key === 'ArrowRight') {
+                    posX += 12;
+                    char.style.transform = 'scaleX(1)';
+                } else {
+                    posX -= 12;
+                    char.style.transform = 'scaleX(-1)';
+                }
+                char.style.left = posX + 'px';
+            }
+        });
+
+        window.addEventListener('keyup', () => {
+            stopTimeout = setTimeout(() => {
+                char.classList.remove('walking');
+            }, 100);
         });
     </script>
 </body>
