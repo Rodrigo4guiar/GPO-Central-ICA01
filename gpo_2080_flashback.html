@@ -3,101 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GPO 2080 - CSS Rain</title>
+    <title>GPO 2080 - Engine de Chuva</title>
     <style>
-        :root {
-            --neon: #00ffcc;
-        }
-        body { margin: 0; background: #020508; overflow: hidden; font-family: 'Courier New', monospace; }
-        
-        #game-container { position: relative; width: 100vw; height: 100vh; background: linear-gradient(to bottom, #020508 0%, #050a0f 100%); }
-
-        /* Estilo das Gotas Sugerido pelo Arquiteto */
-        .drop {
-            position: absolute;
-            width: 1px;
-            height: 80px;
-            background: linear-gradient(to bottom, transparent, rgba(174, 194, 224, 0.4));
-            animation: rain linear infinite;
-        }
-
-        @keyframes rain {
-            0% { transform: translateY(-120vh); }
-            100% { transform: translateY(120vh); }
-        }
-
-        /* Prédios ao fundo */
-        .building {
-            position: absolute; bottom: 60px; background: #050505;
-            border-top: 1px solid rgba(0, 255, 204, 0.1);
-            z-index: 2;
-        }
-
-        /* Personagem */
-        #agent {
-            position: absolute; bottom: 60px; left: 100px;
-            width: 40px; height: 80px; z-index: 10;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #020508; min-height: 100vh; overflow: hidden; font-family: 'Courier New', monospace; }
+        #game-container { position: relative; width: 100vw; height: 100vh; }
+        canvas { display: block; width: 100%; height: 100vh; position: absolute; top: 0; left: 0; }
+        #ui { position: absolute; top: 20px; left: 20px; color: #0ff; text-shadow: 0 0 10px #0ff; z-index: 100; pointer-events: none; }
+        #agent { position: absolute; bottom: 80px; left: 100px; width: 40px; height: 80px; z-index: 10; transition: transform 0.1s; }
         .jacket { width: 100%; height: 50px; background: #ffcc00; box-shadow: 0 0 20px #ffcc00; border-radius: 5px; }
         .legs { width: 100%; height: 30px; display: flex; justify-content: space-around; }
         .leg { width: 12px; height: 100%; background: #111; }
-
-        #floor { position: absolute; bottom: 0; width: 100%; height: 60px; background: #000; border-top: 2px solid #111; z-index: 5; }
-        
-        #ui { position: absolute; top: 20px; left: 20px; color: var(--neon); text-shadow: 0 0 10px var(--neon); z-index: 100; }
+        #floor { position: absolute; bottom: 0; width: 100%; height: 80px; background: #000; border-top: 2px solid #050505; z-index: 5; }
     </style>
 </head>
 <body>
     <div id="game-container">
         <div id="ui">
-            <div>AURA01 - CSS RAIN SYSTEM ACTIVE</div>
-            <div>SETOR 4 - ANO 2080</div>
+            <div>AURA01 - ENGINE DE CHUVA AVANÇADA</div>
+            <div>STATUS: AMBIENTE 2080 CARREGADO</div>
         </div>
-
-        <!-- Prédios -->
-        <div class="building" style="left: 20%; width: 150px; height: 400px;"></div>
-        <div class="building" style="left: 50%; width: 200px; height: 550px; opacity: 0.8;"></div>
-        <div class="building" style="left: 80%; width: 120px; height: 350px;"></div>
-
+        <canvas id="chuvaCanvas"></canvas>
         <div id="agent">
             <div class="jacket"></div>
-            <div class="legs">
-                <div class="leg"></div>
-                <div class="leg"></div>
-            </div>
+            <div class="legs"><div class="leg"></div><div class="leg"></div></div>
         </div>
-
         <div id="floor"></div>
     </div>
-
     <script>
-        const container = document.getElementById('game-container');
-        
-        // Gerar gotas usando a técnica do Arquiteto
-        function createRain() {
-            for(let i=0; i<100; i++) {
-                const drop = document.createElement('div');
-                drop.className = 'drop';
-                drop.style.left = Math.random() * 100 + 'vw';
-                drop.style.opacity = Math.random() * 0.5;
-                
-                // Variar velocidade e delay para efeito natural
-                const duration = Math.random() * 0.5 + 0.5;
-                drop.style.animationDuration = duration + 's';
-                drop.style.animationDelay = Math.random() * 2 + 's';
-                
-                container.appendChild(drop);
+        const canvas = document.getElementById('chuvaCanvas');
+        const ctx = canvas.getContext('2d');
+        function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        const QTD_GOTAS = 400; 
+        const VELOCIDADE_BASE = 8; 
+        const COMPRIMENTO_BASE = 25; 
+        let gotas = [];
+
+        function iniciarGotas() {
+            for (let i = 0; i < QTD_GOTAS; i++) {
+                gotas.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    comprimento: COMPRIMENTO_BASE + Math.random() * 20,
+                    velocidade: VELOCIDADE_BASE + Math.random() * 7,
+                    espessura: 0.5 + Math.random() * 1.5,
+                    opacidade: 0.2 + Math.random() * 0.4
+                });
+            }
+        }
+        iniciarGotas();
+
+        function desenharGota(gota) {
+            ctx.beginPath();
+            ctx.moveTo(gota.x, gota.y);
+            ctx.lineTo(gota.x + 1, gota.y + gota.comprimento);
+            ctx.strokeStyle = `rgba(174, 194, 224, ${gota.opacidade})`;
+            ctx.lineWidth = gota.espessura;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+        }
+
+        function atualizarGota(gota) {
+            gota.y += gota.velocidade;
+            gota.x += 0.5;
+            if (gota.y > canvas.height) {
+                gota.y = -gota.comprimento;
+                gota.x = Math.random() * canvas.width;
             }
         }
 
-        createRain();
+        function animarChuva() {
+            ctx.fillStyle = 'rgba(2, 5, 8, 0.2)'; 
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            for (let gota of gotas) {
+                desenharGota(gota);
+                atualizarGota(gota);
+            }
+            requestAnimationFrame(animarChuva);
+        }
+        animarChuva();
 
-        // Movimento
         let pos = 100;
         window.addEventListener('keydown', (e) => {
-            if(e.key === 'ArrowRight') pos += 15;
-            if(e.key === 'ArrowLeft') pos -= 15;
-            document.getElementById('agent').style.left = pos + 'px';
+            const agent = document.getElementById('agent');
+            if(e.key === 'ArrowRight') { pos += 15; agent.style.transform = 'scaleX(1)'; }
+            if(e.key === 'ArrowLeft') { pos -= 15; agent.style.transform = 'scaleX(-1)'; }
+            agent.style.left = pos + 'px';
         });
     </script>
 </body>
