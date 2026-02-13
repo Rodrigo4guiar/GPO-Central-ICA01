@@ -182,22 +182,68 @@
             <div class="message agent">
                 Sistema inicializado, Arquiteto. A interface do GPO v2 está agora sob seu comando. Como posso auxiliar na expansão do projeto 2080 hoje?
                 <div class="media-viewer">
-                    <!-- Exemplo de como as imagens aparecerão -->
-                    <div style="padding: 40px; text-align: center; background: #000; color: var(--neon); font-size: 0.8rem; border: 1px dashed var(--neon);">
+                    <div id="media-content" style="padding: 40px; text-align: center; background: #000; color: var(--neon); font-size: 0.8rem; border: 1px dashed var(--neon);">
                         [VISUALIZADOR DE MÍDIA PRONTO]
                     </div>
                 </div>
-            </div>
-            
-            <div class="message user">
-                Mostre o progresso da interface.
             </div>
         </div>
 
         <div class="input-area">
             <input type="text" placeholder="Envie um comando para o núcleo...">
-            <button>Enviar</button>
+            <button id="send-btn">Enviar</button>
         </div>
     </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = 'https://iffvgltxnahzsoaqqfgf.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_10pV-F0Qf9z7Hd9M1w39Ww_oIwrXFJT';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        async function sendMessage() {
+            const input = document.querySelector('input');
+            const message = input.value.trim();
+            if (!message) return;
+
+            appendMessage('user', message);
+            input.value = '';
+
+            const { error } = await supabaseClient
+                .from('messages')
+                .insert([{ text: message, sender: 'user', created_at: new Date() }]);
+
+            if (error) console.error('Erro ao enviar para o Supabase:', error);
+        }
+
+        function appendMessage(sender, text) {
+            const container = document.querySelector('.chat-container');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${sender}`;
+            msgDiv.innerText = text;
+            container.appendChild(msgDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        document.getElementById('send-btn').onclick = sendMessage;
+        document.querySelector('input').onkeypress = (e) => { if(e.key === 'Enter') sendMessage(); };
+
+        // Escutar mensagens em tempo real
+        supabaseClient
+            .channel('public:messages')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+                const data = payload.new;
+                if (data.sender === 'agent') {
+                    appendMessage('agent', data.text);
+                    if (data.media_url) {
+                        const mediaArea = document.getElementById('media-content');
+                        mediaArea.innerHTML = `<img src="${data.media_url}" style="width:100%; border-radius: 4px;">`;
+                        mediaArea.style.border = 'none';
+                        mediaArea.style.padding = '0';
+                    }
+                }
+            })
+            .subscribe();
+    </script>
 </body>
 </html>
