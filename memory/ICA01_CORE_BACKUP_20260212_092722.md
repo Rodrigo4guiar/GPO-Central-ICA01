@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HUD · ICA01 · CHAT NEON</title>
+    <!-- Font Awesome para ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* ===== RESET + BASE CYBER (MALHA + RADIAL) ===== */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; }
+        body {
+            background: #0b0f14;
+            background-image: radial-gradient(rgba(0, 255, 255, 0.05) 1px, transparent 1px),
+                              radial-gradient(rgba(0, 200, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px, 80px 80px;
+            background-position: 0 0, 20px 20px;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #b7ffd6;
+            position: relative;
+        }
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: radial-gradient(circle at 50% 50%, rgba(0, 180, 255, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ===== DASHBOARD GRADE ===== */
+        .dashboard {
+            display: grid;
+            grid-template-columns: 260px 1fr 300px;
+            gap: 20px;
+            max-width: 1600px;
+            width: 100%;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* ===== ESTILO BASE DOS PAINÉIS (HUD FLUTUANTE) ===== */
+        .panel {
+            background: rgba(10, 25, 35, 0.65);
+            backdrop-filter: blur(8px) brightness(1.2);
+            border: 1px solid rgba(0, 255, 200, 0.3);
+            border-radius: 16px;
+            box-shadow: 0 0 30px rgba(0, 180, 255, 0.2), inset 0 0 10px rgba(0, 240, 255, 0.1);
+            padding: 22px 18px;
+            transition: all 0.2s ease;
+            transform-style: preserve-3d;
+            transform: perspective(1200px) rotateX(0.8deg) rotateY(-0.5deg);
+        }
+        .panel:hover {
+            border-color: rgba(0, 255, 200, 0.8);
+            box-shadow: 0 0 40px rgba(0, 240, 255, 0.3), inset 0 0 25px rgba(0, 255, 200, 0.2);
+            transform: perspective(1200px) rotateX(0.5deg) rotateY(-0.2deg) translateZ(8px);
+        }
+
+        /* ===== MENU LATERAL ESQUERDO ===== */
+        .menu-list { display: flex; flex-direction: column; gap: 8px; list-style: none; margin-top: 10px; }
+        .menu-item {
+            padding: 12px 16px;
+            background: rgba(0, 30, 30, 0.4);
+            border-left: 4px solid transparent;
+            border-radius: 0 12px 12px 0;
+            font-size: 1.05rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #a0eaff;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: 0.2s;
+            border-bottom: 1px solid rgba(0, 255, 200, 0.1);
+        }
+        .menu-item i { width: 24px; text-align: center; color: #0ff; text-shadow: 0 0 8px cyan; }
+        .menu-item:hover {
+            background: rgba(0, 200, 200, 0.15);
+            border-left: 4px solid #0ff;
+            color: white;
+            text-shadow: 0 0 10px cyan;
+        }
+        .menu-header {
+            font-size: 1.3rem;
+            border-bottom: 1px solid #0ff;
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+            display: flex; align-items: center; gap: 10px;
+            text-shadow: 0 0 10px #0ff;
+            color: #cffff0;
+        }
+
+        /* ===== PAINEL CENTRAL – CHAT HUD ===== */
+        .chat-hud { display: flex; flex-direction: column; width: 100%; }
+        .spectrum { display: flex; align-items: flex-end; justify-content: center; gap: 6px; height: 50px; margin-bottom: 15px; }
+        .bar {
+            width: 12px;
+            background: linear-gradient(to top, #0ff, #6f0);
+            border-radius: 4px 4px 0 0;
+            box-shadow: 0 0 15px #0fa;
+            animation: pulseBar 1.2s infinite alternate ease-in-out;
+        }
+        @keyframes pulseBar { 0% { height: 8px; opacity: 0.7; } 100% { height: 40px; opacity: 1; } }
+        .bar:nth-child(2) { animation-delay: 0.2s; height: 20px; }
+        .bar:nth-child(3) { animation-delay: 0.4s; height: 30px; }
+        .bar:nth-child(4) { animation-delay: 0.6s; height: 15px; }
+        .bar:nth-child(5) { animation-delay: 0.1s; height: 35px; }
+        .bar:nth-child(6) { animation-delay: 0.5s; height: 25px; }
+        .bar:nth-child(7) { animation-delay: 0.3s; height: 18px; }
+        .bar:nth-child(8) { animation-delay: 0.7s; height: 32px; }
+
+        .chat-header-hud { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2fa; padding-bottom: 12px; margin-bottom: 10px; }
+        .chat-header-hud .left { font-size: 1.8rem; font-weight: bold; text-shadow: 0 0 10px cyan; color: #d0fff0; }
+        .health-badge { background: rgba(0, 255, 0, 0.15); border: 1px solid #0f0; border-radius: 40px; padding: 6px 20px; font-weight: bold; color: #9f9; text-shadow: 0 0 10px #0f0; box-shadow: 0 0 15px rgba(0,255,0,0.3); letter-spacing: 2px; }
+        .agent-tag { background: #0a1e1e; border-radius: 6px; padding: 8px 16px; font-size: 1.1rem; border: 1px dashed #0ff; color: #6ff; display: inline-flex; align-items: center; gap: 8px; }
+
+        .matrix-titles { display: flex; flex-wrap: wrap; justify-content: space-around; gap: 15px; margin: 15px 0 25px; text-transform: uppercase; font-weight: 900; letter-spacing: 6px; }
+        .glitch-title {
+            font-size: 2.5rem;
+            text-shadow: 0 0 5px #0ff, 0 0 15px #0ff, 0 0 30px #0fa, 4px 4px 0 #0a4f70, -2px -2px 0 #00cc99;
+            color: #d0fff0;
+            animation: glitch 3s infinite;
+            transform: skew(-2deg);
+            border: 2px dashed rgba(0,255,200,0.4);
+            padding: 8px 18px;
+            background: rgba(0,20,20,0.3);
+            backdrop-filter: blur(4px);
+            border-radius: 8px;
+        }
+        @keyframes glitch { 0%, 100% { transform: skew(-2deg); text-shadow: 0 0 5px #0ff, 0 0 15px #0ff, 4px 4px 0 #0a4f70, -2px -2px 0 #00cc99; } 95% { transform: skew(2deg); text-shadow: -2px 0 5px #f0f, 2px 0 5px #0ff; } }
+
+        .terminal { background: rgba(0, 10, 20, 0.7); backdrop-filter: blur(8px); border: 1px solid #2f9; border-radius: 10px; padding: 18px; margin: 10px 0 20px; box-shadow: inset 0 0 20px rgba(0,20,0,0.8); }
+        .typing-line { display: flex; align-items: baseline; gap: 10px; font-size: 1.2rem; border-bottom: 1px solid rgba(0,255,200,0.2); padding: 8px 0; }
+        .prompt { color: #9f6; font-weight: bold; }
+        #typing-effect { color: #b3ffe0; white-space: pre; border-right: 3px solid #0ff; animation: blinkCursor 0.8s infinite; }
+        @keyframes blinkCursor { 50% { border-color: transparent; } }
+
+        .chat-messages-hud { background: rgba(0, 15, 20, 0.5); border-radius: 12px; padding: 16px; margin: 10px 0 15px; border: 1px solid #2fa; max-height: 180px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .message { display: flex; gap: 12px; border-bottom: 0.5px solid rgba(0,255,200,0.1); padding-bottom: 6px; font-size: 0.95rem; }
+        .message-user { color: #8cf; font-weight: bold; }
+
+        .action-buttons { display: flex; gap: 20px; margin-top: 5px; margin-bottom: 20px; }
+        .neon-btn {
+            background: transparent; border: 1.5px solid #0ff; color: #0ff; padding: 10px 24px; border-radius: 40px; font-weight: bold; text-transform: uppercase; letter-spacing: 3px; font-size: 0.9rem; backdrop-filter: blur(8px); transition: 0.2s; cursor: pointer; box-shadow: 0 0 15px rgba(0,255,255,0.2); display: flex; align-items: center; gap: 8px;
+        }
+        .neon-btn:hover { background: rgba(0, 255, 255, 0.15); box-shadow: 0 0 30px cyan; border-color: white; color: white; }
+
+        /* Botão Rollback Específico */
+        .rollback-btn { border-color: #f06; color: #f06; box-shadow: 0 0 15px rgba(255,0,100,0.2); }
+        .rollback-btn:hover { background: rgba(255,0,100,0.15); box-shadow: 0 0 30px #f06; border-color: white; color: white; }
+
+        .progress-section { display: flex; align-items: center; justify-content: space-between; margin: 15px 0 10px; font-size: 1rem; }
+        .progress-label { color: #9fc; text-transform: uppercase; font-size: 0.9rem; }
+        .progress-bar-bg { flex: 1; height: 16px; background: #0a1a1a; border-radius: 30px; margin: 0 15px; border: 1px solid #0ff; overflow: hidden; box-shadow: inset 0 0 10px #000; }
+        .progress-fill { width: 72%; height: 100%; background: linear-gradient(90deg, #0fa, #0ff); box-shadow: 0 0 20px #0ff; border-radius: 30px; animation: pulseWidth 2s infinite alternate; }
+        @keyframes pulseWidth { from { opacity: 0.9; } to { opacity: 1; box-shadow: 0 0 30px #0ff; } }
+
+        .status-grid { display: flex; gap: 25px; justify-content: flex-end; margin: 10px 0 15px; color: #afefcf; }
+        .status-item { display: flex; align-items: center; gap: 8px; }
+        .pulse-dot { width: 10px; height: 10px; background: #0f0; border-radius: 50%; box-shadow: 0 0 15px #0f0; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 0.6; transform: scale(1); } 100% { opacity: 1; transform: scale(1.3); } }
+
+        .hacker-scroll { background: rgba(0, 15, 15, 0.7); backdrop-filter: blur(6px); border: 1px solid #0f9; border-radius: 8px; padding: 12px; margin-top: 10px; max-height: 150px; overflow: hidden; position: relative; mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%); }
+        .log-stream { display: flex; flex-direction: column; animation: scrollLogs 18s linear infinite; color: #9fddaa; font-size: 0.85rem; }
+        .log-entry { padding: 4px 0; border-bottom: 0.5px dashed rgba(0,255,200,0.2); }
+        @keyframes scrollLogs { 0% { transform: translateY(0); } 100% { transform: translateY(-70%); } }
+
+        /* ===== PAINEL DIREITO ===== */
+        .right-panel { display: flex; flex-direction: column; gap: 25px; }
+        .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 10px; }
+        .control-card { background: rgba(0, 20, 25, 0.7); backdrop-filter: blur(8px); border: 1px solid rgba(0, 200, 255, 0.5); border-radius: 14px; padding: 16px 12px; text-align: center; font-size: 1.2rem; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; color: #9ff; text-shadow: 0 0 10px cyan, 0 0 20px #0ff; box-shadow: 0 0 20px rgba(0,200,200,0.2); transition: 0.15s; border-bottom: 3px solid #0ff; cursor: pointer; }
+        .control-card:hover { background: rgba(0, 200, 200, 0.2); border-color: white; color: white; box-shadow: 0 0 35px cyan; transform: scale(1.02); }
+
+        .neon-glyphs { margin-top: 20px; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(12px); border: 2px solid rgba(255, 80, 200, 0.7); border-radius: 24px; padding: 25px 15px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 20px; box-shadow: 0 0 60px rgba(255, 0, 200, 0.3), inset 0 0 30px rgba(255, 0, 150, 0.2); position: relative; overflow: hidden; }
+        .neon-glyphs::after { content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,0,200,0.1) 0%, transparent 70%); animation: rotateGlow 20s linear infinite; }
+        @keyframes rotateGlow { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .glyph-item { font-size: 2.5rem; font-weight: 900; color: #ffb3ff; text-shadow: 0 0 15px #f0f, 0 0 45px #ff44aa, 0 0 90px #ff00aa; animation: flicker 3s infinite; padding: 5px 15px; background: rgba(20,0,10,0.3); border-radius: 20px; backdrop-filter: blur(4px); border: 1px solid rgba(255,100,255,0.6); letter-spacing: 8px; }
+        @keyframes flicker { 0%, 100% { opacity: 1; text-shadow: 0 0 15px #f0f, 0 0 45px #ff44aa, 0 0 90px #ff00aa; } 33% { opacity: 0.9; text-shadow: 0 0 25px #ff00aa, 0 0 70px #ff0088; } }
+
+        @media (max-width: 1000px) { .dashboard { grid-template-columns: 1fr; } .right-panel { order: 2; } }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- PAINEL ESQUERDO – MENU -->
+        <div class="panel">
+            <div class="menu-header"><i class="fas fa-cube"></i> NÚCLEO</div>
+            <ul class="menu-list">
+                <li class="menu-item"><i class="fas fa-comment"></i> Bater papo</li>
+                <li class="menu-item"><i class="fas fa-sliders-h"></i> Controlar</li>
+                <li class="menu-item"><i class="fas fa-chart-pie"></i> Visão geral</li>
+                <li class="menu-item"><i class="fas fa-layer-group"></i> Canais</li>
+                <li class="menu-item"><i class="fas fa-server"></i> Instâncias</li>
+                <li class="menu-item"><i class="fas fa-wifi"></i> Sessões</li>
+                <li class="menu-item"><i class="fas fa-chart-line"></i> Uso</li>
+                <li class="menu-item"><i class="fas fa-tasks"></i> Tarefas</li>
+                <li class="menu-item"><i class="fas fa-robot"></i> Agente</li>
+                <li class="menu-item"><i class="fas fa-users-cog"></i> Agentes</li>
+                <li class="menu-item"><i class="fas fa-brain"></i> Habilidades</li>
+                <li class="menu-item"><i class="fas fa-project-diagram"></i> Nós</li>
+                <li class="menu-item"><i class="fas fa-cog"></i> Configurações</li>
+                <li class="menu-item"><i class="fas fa-tools"></i> Configuração</li>
+                <li class="menu-item"><i class="fas fa-bug"></i> Depurar</li>
+                <li class="menu-item"><i class="fas fa-list-alt"></i> Registros</li>
+                <li class="menu-item"><i class="fas fa-cubes"></i> Recursos</li>
+                <li class="menu-item"><i class="fas fa-file-alt"></i> Documentos</li>
+            </ul>
+            <div style="margin-top: 20px; border-top: 1px solid #0ff; padding-top: 12px; color: #0fa; font-size: 0.8rem; text-align: right;">
+                <i class="fas fa-shield-alt"></i> SOBERANIA 72%
+            </div>
+        </div>
+
+        <!-- PAINEL CENTRAL – CHAT HUD -->
+        <div class="panel" style="padding: 20px;">
+            <div class="chat-hud">
+                <div class="spectrum">
+                    <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                    <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                </div>
+                <div class="chat-header-hud">
+                    <span class="left">ICA01</span>
+                    <div style="display: flex; gap: 15px; align-items: center;">
+                        <span class="health-badge"><i class="fas fa-heartbeat"></i> SAÚDE OK</span>
+                        <span class="agent-tag"><i class="fas fa-microchip"></i> agente:principal</span>
+                    </div>
+                </div>
+                <div class="matrix-titles">
+                    <div class="glitch-title">CAT</div>
+                    <div class="glitch-title">FASER</div>
+                    <div class="glitch-title">CETER</div>
+                </div>
+                <div class="terminal">
+                    <div class="typing-line">
+                        <span class="prompt">[root@ica01]#</span>
+                        <span id="typing-effect"></span>
+                    </div>
+                    <div style="color: #8ec; margin-top: 8px; font-size: 0.9rem;">
+                        > Tarefa: Dashboard Neon Ativa<br>
+                        > Status: <span style="color: #6f6;">SINCRONIZADO</span>
+                    </div>
+                </div>
+                <div class="chat-messages-hud">
+                    <div class="message"><span class="message-user">> sistema:</span> <span style="color: #bfb;">gateway 2.1 implantado</span></div>
+                    <div class="message"><span class="message-user">> agente:</span> <span style="color: #aff;">Dashboard Dashboard sincronizado</span></div>
+                    <div class="message"><span class="message-user">> arquiteto:</span> <span style="color: #fcf;">painel central atualizado</span></div>
+                </div>
+                <div class="action-buttons">
+                    <button class="neon-btn"><i class="fas fa-plus-circle"></i> Nova sessão</button>
+                    <button class="neon-btn rollback-btn" onclick="alert('ROLLBACK INICIADO VIA DASHBOARD')"><i class="fas fa-undo"></i> Rollback</button>
+                    <button class="neon-btn"><i class="fas fa-paper-plane"></i> Enviar</button>
+                </div>
+                <div class="progress-section">
+                    <span class="progress-label">PATENTE 01/01/26</span>
+                    <div class="progress-bar-bg"><div class="progress-fill"></div></div>
+                    <span style="color: #0ff; font-weight: bold;">72%</span>
+                </div>
+                <div class="status-grid">
+                    <div class="status-item"><span class="pulse-dot"></span> Núcleo ativo</div>
+                    <div class="status-item"><span class="pulse-dot"></span> Soberania: 72%</div>
+                </div>
+                <div class="hacker-scroll">
+                    <div class="log-stream" id="logStream">
+                        <div class="log-entry">[INFO] Dashboard Neon carregado com sucesso.</div>
+                        <div class="log-entry">[HUD] Protocolo de segurança preventiva sincronizado.</div>
+                        <div class="log-entry">[SYS] Backup consolidado antes da implantação.</div>
+                        <div class="log-entry">[CORE] Malha neural em 72.4% de estabilidade.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAINEL DIREITO – CONTROLES -->
+        <div class="right-panel">
+            <div class="panel">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid cyan; padding-bottom: 8px;">
+                    <span style="font-size: 1.4rem; text-shadow: 0 0 8px cyan;">⚡ COMANDO</span>
+                    <i class="fas fa-terminal" style="color: #0ff;"></i>
+                </div>
+                <div class="control-grid">
+                    <div class="control-card">PAUSED</div>
+                    <div class="control-card">RESUME</div>
+                    <div class="control-card">RESTART</div>
+                    <div class="control-card">OPTIONS</div>
+                    <div class="control-card" style="grid-column: span 2; background: rgba(200,0,80,0.2); border-color: #f0f;">EXIT</div>
+                </div>
+            </div>
+            <div class="panel" style="background: rgba(5, 0, 15, 0.7); border-color: #f6f;">
+                <span style="font-size: 1rem; color: #fcf; letter-spacing: 5px; border-bottom: 1px solid #f0f; padding-bottom: 8px;">⚡ GLITCH NEON</span>
+                <div class="neon-glyphs">
+                    <span class="glyph-item">ateA</span>
+                    <span class="glyph-item">MELON</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const phrases = ["executando dashboard...", "HUD flutuante ativado.", "CAT/FASER/CETER sincronizados.", "soberania em 72%."];
+        let index = 0, charIndex = 0, currentPhrase = phrases[index];
+        const typingElement = document.getElementById('typing-effect');
+        function typeEffect() {
+            if (charIndex < currentPhrase.length) {
+                typingElement.textContent += currentPhrase.charAt(charIndex++);
+                setTimeout(typeEffect, 80);
+            } else setTimeout(eraseEffect, 2000);
+        }
+        function eraseEffect() {
+            if (charIndex > 0) {
+                typingElement.textContent = currentPhrase.substring(0, --charIndex);
+                setTimeout(eraseEffect, 40);
+            } else {
+                index = (index + 1) % phrases.length;
+                currentPhrase = phrases[index];
+                setTimeout(typeEffect, 300);
+            }
+        }
+        window.onload = () => setTimeout(typeEffect, 500);
+    </script>
+</body>
+</html>

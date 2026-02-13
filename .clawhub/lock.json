@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "skills": {
+    "gcalcli-calendar": {
+      "version": "3.0.0",
+      "installedAt": 1770986126180
+    },
+    "github": {
+      "version": "1.0.0",
+      "installedAt": 1770993757256
+    },
+    "goplaces": {
+      "version": "1.0.0",
+      "installedAt": 1770993759054
+    },
+    "camsnap": {
+      "version": "1.0.0",
+      "installedAt": 1770993760829
+    },
+    "blogwatcher": {
+      "version": "1.0.0",
+      "installedAt": 1770993762216
+    },
+    "gemini": {
+      "version": "1.0.0",
+      "installedAt": 1770993764067
+    },
+    "codex-orchestrator": {
+      "version": "1.0.0",
+      "installedAt": 1770996749546
+    },
+    "coding": {
+      "version": "1.0.0",
+      "installedAt": 1770996751273
+    },
+    "rei": {
+      "version": "1.0.3",
+      "installedAt": 1770996753507
+    }
+  }
+}

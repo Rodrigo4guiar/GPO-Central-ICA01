@@ -1,0 +1,222 @@
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GPO v2 // MASTER CONTROL FINANCE</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --neon: #00ffcc; --bg: #05080a; --panel: rgba(10, 25, 35, 0.95); --red: #ff003c; --yellow: #ffea00; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background: #0b0f14; color: #b7ffd6; font-family: 'Courier New', monospace; margin: 0; padding: 0; overflow-x: hidden; font-size: 16px; min-height: 100vh; }
+        #cyberCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
+        
+        #loginScreen { position: fixed; top:0; left:0; width: 100%; height:100%; background: rgba(0,0,0,0.9); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(15px); }
+        .login-box { background: var(--panel); border: 2px solid var(--neon); padding: 30px; border-radius: 20px; text-align: center; width: 100%; max-width: 400px; box-shadow: 0 0 30px rgba(0,255,200,0.3); }
+        .login-box input { background: #000; border: 1px solid var(--neon); color: #fff; padding: 12px; width: 100%; margin-bottom: 15px; border-radius: 8px; text-align: center; font-size: 1rem; }
+        
+        #mainContent { display: none; padding: 15px 15px 80px 15px; position: relative; z-index: 1; }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--neon); padding: 10px 0; background: rgba(0,0,0,0.5); }
+        
+        .tabs { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(10, 30, 30, 0.95); display: flex; justify-content: space-around; padding: 10px 5px; border-top: 1px solid var(--neon); z-index: 900; }
+        .tab-btn { background: transparent; border: none; color: var(--neon); padding: 8px; cursor: pointer; font-size: 0.6rem; display: flex; flex-direction: column; align-items: center; gap: 5px; opacity: 0.6; }
+        .tab-btn.active { opacity: 1; text-shadow: 0 0 10px var(--neon); }
+        
+        .panel { background: var(--panel); border: 1px solid var(--neon); border-radius: 12px; padding: 15px; margin-bottom: 20px; backdrop-filter: blur(10px); }
+        input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #1a2a2a; background: #000; color: #fff; font-size: 1rem; margin-bottom: 10px; }
+        button.primary-btn { width: 100%; padding: 14px; border-radius: 8px; background: var(--neon); color: #000; font-weight: bold; cursor: pointer; border: none; }
+        
+        .table-wrapper { width: 100%; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.75rem; min-width: 800px; }
+        th { text-align: left; color: var(--neon); border-bottom: 2px solid #1a2a2a; padding: 12px; }
+        td { border-bottom: 1px solid #1a2a2a; padding: 12px; }
+        
+        .user-badge { background: var(--neon); color: #000; padding: 2px 8px; border-radius: 10px; font-size: 0.6rem; font-weight: bold; }
+        .admin-section { border: 1px dashed var(--yellow); padding: 15px; margin-top: 20px; border-radius: 10px; background: rgba(255,234,0,0.05); }
+
+        #tab-registros, #tab-parcelas, #tab-config { display: none; }
+    </style>
+</head>
+<body>
+    <canvas id="cyberCanvas"></canvas>
+
+    <div id="loginScreen">
+        <div class="login-box">
+            <h1 style="color:var(--neon); letter-spacing:3px; font-size:1rem; margin-bottom:20px">GPO v2 // SISTEMA MASTER</h1>
+            <div id="loginForm">
+                <input type="text" id="userLogin" placeholder="NOME USUÁRIO">
+                <input type="password" id="passLogin" placeholder="SENHA">
+                <button class="primary-btn" onclick="auth()">ACESSAR SISTEMA</button>
+                <p style="font-size: 0.7rem; margin-top: 20px; opacity: 0.6; cursor: pointer;" onclick="toggleAuth(true)">CADASTRAR NOVO PERFIL</p>
+            </div>
+            <div id="registerForm" style="display:none">
+                <input type="text" id="newUser" placeholder="NOME DO PERFIL">
+                <input type="password" id="newPass" placeholder="SENHA DO PERFIL">
+                <button class="primary-btn" onclick="register()">CRIAR ACESSO</button>
+                <p style="font-size: 0.7rem; margin-top: 20px; opacity: 0.6; cursor: pointer;" onclick="toggleAuth(false)">VOLTAR</p>
+            </div>
+            <div id="errorMsg" style="color: var(--red); font-size: 0.8rem; margin-top: 10px; display: none;">DADOS INCORRETOS</div>
+        </div>
+    </div>
+
+    <div id="mainContent">
+        <div class="container">
+            <header>
+                <h1>GPO MASTER <span id="currentUserBadge" class="user-badge"></span></h1>
+                <button onclick="logout()" style="background:transparent; border:1px solid var(--red); color:var(--red); padding:5px; font-size:0.6rem">SAIR</button>
+            </header>
+
+            <div id="tab-home">
+                <div class="panel">
+                    <h2>Entrada Mensal</h2>
+                    <input type="text" id="salarioInput" placeholder="0,00" oninput="maskMoney(this)" onchange="updateSalario()">
+                    <h2>Lançar Despesa</h2>
+                    <input type="text" id="nomeDespesa" placeholder="Nome">
+                    <input type="text" id="valorDespesa" placeholder="Valor Total" oninput="maskMoney(this)">
+                    <input type="number" id="parcelasTotal" value="1" placeholder="Parcelas">
+                    <button class="primary-btn" onclick="adicionarDespesa()">SALVAR</button>
+                </div>
+                <div class="panel">
+                    <h2>Pendências</h2>
+                    <div class="table-wrapper"><table><thead><tr><th>CONTA</th><th>RESTANTE</th><th>PAGAR</th></tr></thead><tbody id="listaHome"></tbody></table></div>
+                </div>
+            </div>
+
+            <div id="tab-registros">
+                <div class="panel"><h2>Auditoria</h2><div class="table-wrapper"><table><thead><tr><th>DATA</th><th>NOME</th><th>VALOR</th><th>STATUS</th><th>REMOVER</th></tr></thead><tbody id="listaRegistros"></tbody></table></div></div>
+            </div>
+
+            <!-- CONTROLE MASTER (SOMENTE PARA RODRIGO) -->
+            <div id="tab-config">
+                <div class="panel">
+                    <h2>Painel de Controle de Acessos</h2>
+                    <div id="adminPanel" style="display:none">
+                        <div class="admin-section">
+                            <h3 style="color:var(--yellow); font-size:0.8rem">SISTEMA CENTRAL DE SENHAS (MASTER)</h3>
+                            <div class="table-wrapper">
+                                <table style="min-width: 100%">
+                                    <thead><tr><th>USUÁRIO</th><th>SENHA ATUAL</th><th>NOVA SENHA</th><th>AÇÃO</th></tr></thead>
+                                    <tbody id="userTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="userPanel">
+                        <p>Usuário: <strong id="confUser" style="color:var(--neon)">-</strong></p>
+                        <p>Sua Senha: <strong id="confPass">-</strong></p>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="tabs">
+                <button class="tab-btn active" id="btn-home" onclick="showTab('home')"><i class="fas fa-th-large"></i>DASH</button>
+                <button class="tab-btn" id="btn-registros" onclick="showTab('registros')"><i class="fas fa-list-ul"></i>REG</button>
+                <button class="tab-btn" id="btn-config" onclick="showTab('config')"><i class="fas fa-user-shield"></i>MASTER</button>
+            </nav>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('cyberCanvas'); const ctx = canvas.getContext('2d');
+        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        resize(); window.addEventListener('resize', resize);
+        function draw() { ctx.fillStyle = "rgba(0, 0, 0, 0.1)"; ctx.fillRect(0, 0, canvas.width, canvas.height); requestAnimationFrame(draw); }
+        draw();
+
+        // CHAVE DE BANCO DE DADOS DEFINITIVA
+        const USERS_DB = 'GPO_MASTER_DATA_V13';
+        let users = JSON.parse(localStorage.getItem(USERS_DB)) || { 
+            "rodrigo": { pass: "2026", data: { salario: 0, despesas: [] } } 
+        };
+        let loggedUser = sessionStorage.getItem('logged_user');
+
+        function toggleAuth(isRegister) {
+            document.getElementById('loginForm').style.display = isRegister ? 'none' : 'block';
+            document.getElementById('registerForm').style.display = isRegister ? 'block' : 'none';
+        }
+
+        function register() {
+            const u = document.getElementById('newUser').value.trim().toLowerCase();
+            const p = document.getElementById('newPass').value.trim();
+            if(!u || !p) return;
+            users[u] = { pass: p, data: { salario: 0, despesas: [] } };
+            localStorage.setItem(USERS_DB, JSON.stringify(users));
+            alert("Perfil criado!"); toggleAuth(false);
+        }
+
+        function auth() {
+            const u = document.getElementById('userLogin').value.trim().toLowerCase();
+            const p = document.getElementById('passLogin').value.trim();
+            if(users[u] && users[u].pass === p) {
+                sessionStorage.setItem('logged_user', u);
+                loggedUser = u;
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                render();
+            } else { document.getElementById('errorMsg').style.display = 'block'; }
+        }
+
+        function masterReset(u) {
+            const newP = document.getElementById('newPass-'+u).value;
+            if(!newP) return;
+            users[u].pass = newP;
+            localStorage.setItem(USERS_DB, JSON.stringify(users));
+            alert("Senha de " + u + " resetada!"); render();
+        }
+
+        function logout() { sessionStorage.removeItem('logged_user'); window.location.reload(); }
+        function save() { localStorage.setItem(USERS_DB, JSON.stringify(users)); render(); }
+        function updateSalario() { users[loggedUser].data.salario = parseBRL(document.getElementById('salarioInput').value); save(); }
+        function adicionarDespesa() {
+            const nome = document.getElementById('nomeDespesa').value;
+            const valor = parseBRL(document.getElementById('valorDespesa').value);
+            const pTot = parseInt(document.getElementById('parcelasTotal').value) || 1;
+            if(!nome || valor <= 0) return;
+            users[loggedUser].data.despesas.unshift({ id: Date.now(), dataStr: new Date().toLocaleDateString('pt-br'), nome, valor, pTotal: pTot, pPagas: 0 });
+            save();
+        }
+
+        function render() {
+            if(!loggedUser) return;
+            const isRodrigo = (loggedUser === 'rodrigo');
+            document.getElementById('currentUserBadge').innerText = loggedUser.toUpperCase();
+            document.getElementById('confUser').innerText = loggedUser.toUpperCase();
+            document.getElementById('confPass').innerText = users[loggedUser].pass;
+            
+            // PAINEL MASTER (RODRIGO)
+            if(isRodrigo) {
+                document.getElementById('adminPanel').style.display = 'block';
+                const tbody = document.getElementById('userTableBody');
+                tbody.innerHTML = '';
+                Object.keys(users).forEach(u => {
+                    tbody.innerHTML += `<tr>
+                        <td>${u.toUpperCase()}</td><td>${users[u].pass}</td>
+                        <td><input type="text" id="newPass-${u}" style="margin:0; padding:5px; width:100px" placeholder="Nova"></td>
+                        <td><button class="btn-pay-sm" onclick="masterReset('${u}')">RESET</button></td>
+                    </tr>`;
+                });
+            }
+
+            // RENDERIZAÇÃO DE DADOS (DASHBOARD/REGISTROS)
+            const uData = users[loggedUser].data;
+            document.getElementById('salarioInput').value = (uData.salario || 0).toFixed(2).replace(".", ",").replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+            const lH = document.getElementById('listaHome'), lR = document.getElementById('listaRegistros');
+            lH.innerHTML = lR.innerHTML = '';
+            uData.despesas.forEach(d => {
+                const rest = d.valor - ((d.valor/d.pTotal)*d.pPagas);
+                if(rest > 0.01) lH.innerHTML += `<tr><td>${d.nome}</td><td>${formatBRL(rest)}</td><td><button class="btn-pay-sm" onclick="pagarParcela(${d.id})">PAGAR</button></td></tr>`;
+                lR.innerHTML += `<tr><td>${d.dataStr}</td><td>${d.nome}</td><td>${formatBRL(d.valor)}</td><td>${d.pPagas >= d.pTotal ? 'PAGO' : 'EM DIA'}</td><td><button class="btn-del-sm" onclick="excluir(${d.id})">X</button></td></tr>`;
+            });
+        }
+
+        function pagarParcela(id) { const item = users[loggedUser].data.despesas.find(d => d.id === id); if(item && item.pPagas < item.pTotal) { item.pPagas++; save(); } }
+        function excluir(id) { if(confirm("REMOVER?")) { users[loggedUser].data.despesas = users[loggedUser].data.despesas.filter(d => d.id !== id); save(); } }
+        function showTab(t) { ['home','registros','config'].forEach(i => document.getElementById('tab-'+i).style.display='none'); document.getElementById('tab-'+t).style.display='block'; document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); document.getElementById('btn-'+t).classList.add('active'); }
+        function maskMoney(i) { let v = i.value.replace(/\D/g,''); v = (v/100).toFixed(2) + ''; v = v.replace(".", ","); v = v.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1."); i.value = v; }
+        function parseBRL(v) { return parseFloat(v.toString().replace(/\./g, '').replace(',', '.')) || 0; }
+        function formatBRL(v) { return (v || 0).toLocaleString('pt-br', { style: 'currency', currency: 'BRL' }); }
+        window.onload = () => { if(loggedUser) { document.getElementById('loginScreen').style.display='none'; document.getElementById('mainContent').style.display='block'; render(); } };
+    </script>
+</body>
+</html>
