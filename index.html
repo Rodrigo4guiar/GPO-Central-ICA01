@@ -165,8 +165,8 @@
         <div class="status-card">
             <div class="status-title">Core Status</div>
             <div style="display: flex; align-items: center; gap: 10px;">
-                <div style="width: 10px; height: 10px; background: var(--neon); border-radius: 50%; box-shadow: 0 0 5px var(--neon);"></div>
-                <span>OPERATIONAL</span>
+                <div id="conn-indicator" style="width: 10px; height: 10px; background: #666; border-radius: 50%;"></div>
+                <span id="conn-text">DISCONNECTED</span>
             </div>
         </div>
 
@@ -201,6 +201,22 @@
         const SUPABASE_KEY = 'sb_publishable_10pV-F0Qf9z7Hd9M1w39Ww_oIwrXFJT';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        // Indicador de Conexão
+        const indicator = document.getElementById('conn-indicator');
+        const connText = document.getElementById('conn-text');
+        
+        function setConnected(status) {
+            if(status) {
+                indicator.style.background = '#00ffcc';
+                indicator.style.boxShadow = '0 0 10px #00ffcc';
+                connText.innerText = 'OPERATIONAL';
+            } else {
+                indicator.style.background = '#ff0055';
+                indicator.style.boxShadow = '0 0 10px #ff0055';
+                connText.innerText = 'OFFLINE';
+            }
+        }
+
         async function sendMessage() {
             const input = document.querySelector('input');
             const message = input.value.trim();
@@ -213,7 +229,12 @@
                 .from('messages')
                 .insert([{ text: message, sender: 'user', created_at: new Date() }]);
 
-            if (error) console.error('Erro ao enviar para o Supabase:', error);
+            if (error) {
+                console.error('Erro ao enviar:', error);
+                setConnected(false);
+            } else {
+                setConnected(true);
+            }
         }
 
         function appendMessage(sender, text) {
@@ -228,7 +249,9 @@
         document.getElementById('send-btn').onclick = sendMessage;
         document.querySelector('input').onkeypress = (e) => { if(e.key === 'Enter') sendMessage(); };
 
-        // Escutar mensagens em tempo real
+        // Escutar mensagens e testar conexão inicial
+        setConnected(true); // Assume ativo se carregar a lib
+        
         supabaseClient
             .channel('public:messages')
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
