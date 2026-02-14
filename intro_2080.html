@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>GPO 2080 - Intro Cinematográfica</title>
+    <style>
+        body { margin: 0; background: #000; overflow: hidden; font-family: 'Courier New', monospace; }
+        #canvas-container { position: relative; width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; }
+        canvas { background: #020508; image-rendering: pixelated; border: 4px solid #1a1a1a; }
+        #overlay { position: absolute; color: #ffcc00; font-size: 40px; display: none; text-shadow: 0 0 20px #ffcc00; font-weight: bold; letter-spacing: 10px; animation: pulse 1s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    </style>
+</head>
+<body>
+    <div id="canvas-container">
+        <canvas id="introCanvas"></canvas>
+        <div id="overlay">START GAME</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('introCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 800; canvas.height = 450;
+
+        let frame = 0;
+        let state = 'lying'; // lying, rising, smoking, cat, start
+        let lightning = 0;
+
+        // Assets
+        const agent = { x: 200, y: 380, color: '#ffcc00', legs: '#006633' };
+        const raindrops = Array.from({length: 200}, () => ({ x: Math.random()*800, y: Math.random()*450, v: 10+Math.random()*10 }));
+
+        function drawScene() {
+            frame++;
+            
+            // Fundo e Relâmpago
+            ctx.fillStyle = lightning > 0 ? `rgba(200, 255, 255, ${lightning})` : '#020508';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            if (lightning > 0) lightning -= 0.05;
+            if (Math.random() > 0.99 && frame < 500) { lightning = 0.5; }
+
+            // Parede do Beco
+            ctx.fillStyle = '#050a0f';
+            ctx.fillRect(150, 100, 20, 300);
+            
+            // Desenhar Agente baseado no Estado
+            ctx.shadowBlur = 15; ctx.shadowColor = agent.color;
+            if (state === 'lying') {
+                ctx.fillStyle = agent.color;
+                ctx.fillRect(agent.x, agent.y + 10, 50, 15); // Jaqueta no chao
+                if (frame > 120) state = 'rising';
+            } else if (state === 'rising') {
+                ctx.fillStyle = agent.color;
+                ctx.fillRect(agent.x - 30, agent.y - 40, 25, 50); // Encostado na parede
+                if (frame > 250) state = 'smoking';
+            } else if (state === 'smoking') {
+                ctx.fillStyle = agent.color;
+                ctx.fillRect(agent.x - 30, agent.y - 40, 25, 50);
+                // Brilho do cigarro
+                ctx.fillStyle = '#ff0000';
+                ctx.shadowBlur = 10; ctx.shadowColor = 'red';
+                ctx.fillRect(agent.x - 10, agent.y - 25, 3, 3);
+                // Fumaça
+                ctx.fillStyle = 'rgba(200,200,200,0.2)';
+                ctx.fillRect(agent.x - 10, agent.y - 30 - (frame%20), 5, 5);
+                if (frame > 450) state = 'cat';
+            }
+
+            // Gato Holográfico
+            if (state === 'cat') {
+                ctx.fillStyle = agent.color;
+                ctx.fillRect(agent.x - 30, agent.y - 40, 25, 50);
+                let catX = (frame - 450) * 4;
+                ctx.fillStyle = 'rgba(0, 255, 255, 0.4)';
+                ctx.shadowColor = 'cyan';
+                ctx.fillRect(catX, 390, 20, 10); // Representação do gato
+                if (catX > 900) {
+                    state = 'start';
+                    document.getElementById('overlay').style.display = 'block';
+                }
+            }
+
+            // Chuva
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = 'rgba(174, 194, 224, 0.4)';
+            raindrops.forEach(d => {
+                ctx.beginPath(); ctx.moveTo(d.x, d.y); ctx.lineTo(d.x+1, d.y+15); ctx.stroke();
+                d.y += d.v; if(d.y > 450) d.y = -20;
+            });
+
+            if (state !== 'start') requestAnimationFrame(drawScene);
+        }
+
+        drawScene();
+    </script>
+</body>
+</html>
